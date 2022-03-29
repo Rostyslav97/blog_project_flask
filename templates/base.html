@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link type="text/css" href="{{ url_for('static', filename='css/styles.css')}}" rel="stylesheet" />   
+    {% block title %}
+        {% if title %}
+            <title>Blog Project- {{ title }}</title>
+        {% else %}
+            <title>Blog Project</title>
+        {% endif %}
+    {% endblock %}
+</head>
+<body>
+    {% block content %}
+        {% block mainmenu %}
+            <ul class="mainmenu">
+            <li><a href="{{url_for('index')}}">Main Page</a></li>
+            <li><a href="{{url_for('addpost')}}">Add Post</a></li>
+            </ul>
+        {% endblock mainmenu %}
+            {% if title -%}
+            <h1>{{ title }}</h1>
+            {% else -%}
+            <h1>Blog Project</h1>
+            {% endif %}
+    {% endblock %}
+    </body>
+</html>

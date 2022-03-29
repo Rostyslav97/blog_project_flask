@@ -1,17 +1,12 @@
 import sqlite3
 import os
-from flask import Flask, render_template, request, g 
-
-
+from flask import Flask, flash, render_template, request, g, abort
+from FDataBase import FDataBase
+ 
 # Конфигурация WSGI приложения
 DATABASE = '/tmp/flsite.db'
 DEBUG = True
 SECRET_KEY = 'sdg5cf2gh9sdf3se4f34'
-
-
-menu = [{"name": "Installation", "url": "install"},
-        {"name": "First App", "url": "first_app"},
-        {"name": "Contact", "url": "contact"}]
 
 
 app = Flask(__name__)
@@ -43,12 +38,6 @@ def get_db():
     return g.link_db
 
 
-@app.route("/")
-def index():
-    db = get_db() 
-    return render_template('index.html', menu=menu) 
-
-
 @app.teardown_appcontext 
 def close_db(error): 
     """Закрываем соединение с БД, если оно было установлено"""
@@ -56,5 +45,42 @@ def close_db(error):
         g.link_db.close() 
 
 
+@app.route("/")
+def index():
+    db = get_db()
+    dbase = FDataBase(db) 
+    return render_template('index.html', menu=dbase.getMenu(), posts=dbase.getPostsAnonce()) 
+
+
+
+@app.route("/add_post", methods=["POST", "GET"])
+def addpost():
+    db = get_db()
+    dbase = FDataBase(db)
+
+    if request.method == "POST":
+        if len(request.form['name']) > 4 and len(request.form['post']) > 10:
+            res = dbase.addPost(request.form['name'], request.form['post'])
+            if not res:
+                flash("Post adding mistake", category='error')
+            else:
+                flash("Post added successfully", category='success')
+        else:
+            flash("Post adding mistake", category='error')
+    
+    return render_template('add_post.html', menu=dbase.getMenu(), title="Post adding")
+
+
+@app.route("/post/<int:id_post>")
+def showpost(id_post):
+    db = get_db()
+    dbase = FDataBase(db)
+    title, post = dbase.getPost(id_post) # из БД берем пост и отображать
+    if not title:
+        abort(404)
+    
+    return render_template('post.html', menu=dbase.getMenu(), title=title, post=post)
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True) 
