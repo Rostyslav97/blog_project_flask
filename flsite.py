@@ -52,7 +52,6 @@ def index():
     return render_template('index.html', menu=dbase.getMenu(), posts=dbase.getPostsAnonce()) 
 
 
-
 @app.route("/add_post", methods=["POST", "GET"])
 def addpost():
     db = get_db()
@@ -60,7 +59,7 @@ def addpost():
 
     if request.method == "POST":
         if len(request.form['name']) > 4 and len(request.form['post']) > 10:
-            res = dbase.addPost(request.form['name'], request.form['post'])
+            res = dbase.addPost(request.form['name'], request.form['post'], request.form['url'])
             if not res:
                 flash("Post adding mistake", category='error')
             else:
@@ -71,11 +70,11 @@ def addpost():
     return render_template('add_post.html', menu=dbase.getMenu(), title="Post adding")
 
 
-@app.route("/post/<int:id_post>")
-def showpost(id_post):
+@app.route("/post/<alias>")
+def showpost(alias):
     db = get_db()
     dbase = FDataBase(db)
-    title, post = dbase.getPost(id_post) # из БД берем пост и отображать
+    title, post = dbase.getPost(alias) 
     if not title:
         abort(404)
     
@@ -84,3 +83,4 @@ def showpost(id_post):
 
 if __name__ == "__main__":
     app.run(debug=True) 
+ 

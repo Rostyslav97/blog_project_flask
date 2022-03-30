@@ -14,9 +14,10 @@
     {% block content %}
         {% block mainmenu %}
             <ul class="mainmenu">
-            <li><a href="{{url_for('index')}}">Main Page</a></li>
-            <li><a href="{{url_for('addpost')}}">Add Post</a></li>
-            </ul>
+                {% for p in menu %}
+                <li><a href="{{p.url}}">{{p.title}}</a></li>
+                {% endfor %}
+                </ul>
         {% endblock mainmenu %}
             {% if title -%}
             <h1>{{ title }}</h1>

@@ -20,10 +20,16 @@ class FDataBase:
         return [] 
 
 
-    def addPost(self, title, text): 
+    def addPost(self, title, text, url): 
         try: 
+            self.__cur.execute(f"SELECT COUNT() as 'count' FROM posts WHERE url LIKE {'url'}") # url должен совпалать с тем url, который передали
+            res = self.__cur.fetchone()
+            if res['count'] > 0:
+                print("Post with this URL already exists")
+                return False
+
             tm = math.floor(time()) 
-            self.__cur.execute("INSERT INTO posts VALUES(NULL, ?, ?, ?)", (title, text, tm)) 
+            self.__cur.execute("INSERT INTO posts VALUES(NULL, ?, ?, ?, ?)", (title, text, url, tm)) 
             self.__db.commit() 
         except sqlite3.Error as e:
             print("Mistake while adding post to DB "+str(e))
@@ -32,11 +38,11 @@ class FDataBase:
         return True
 
 
-    def getPost(self, postId):
+    def getPost(self, alias):
         try:
-            self.__cur.execute(f"SELECT title, text FROM posts WHERE id = {postId} LIMIT 1") 
-            res = self.__cur.fetchone() # берем один пост
-            if res: # если res не равняется None
+            self.__cur.execute(f"SELECT title, text FROM posts WHERE url LIKE '{alias}' LIMIT 1") 
+            res = self.__cur.fetchone() 
+            if res: 
                 return res 
         except sqlite3.Error as e:
             print("Mistake while getting post from DB " +str(e))
@@ -46,8 +52,8 @@ class FDataBase:
     
     def getPostsAnonce(self):
         try:
-            self.__cur.execute(f"SELECT id, title, text FROM posts ORDER BY time DESC") # выбираем все записи с таблицы posts начиная от самой новой
-            res = self.__cur.fetchall() # получаем все записи в виде словаря
+            self.__cur.execute(f"SELECT id, title, text, url FROM posts ORDER BY time DESC") # выбираем все записи с таблицы posts начиная от самой новой
+            res = self.__cur.fetchall() 
             if res: return res
         except sqlite3.Error as e:
             print("Mistake while getting post from DB "+str(e))
