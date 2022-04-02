@@ -1,8 +1,10 @@
 import sqlite3
 import os
-from flask import Flask, flash, render_template, request, g, abort
+from flask import Flask, flash, render_template, request, g, abort, url_for, redirect
 from FDataBase import FDataBase
- 
+from werkzeug.security import generate_password_hash, check_password_hash
+
+
 # Конфигурация WSGI приложения
 DATABASE = '/tmp/flsite.db'
 DEBUG = True
@@ -38,6 +40,16 @@ def get_db():
     return g.link_db
 
 
+dbase = None 
+@app.before_request
+def before_request():
+    """Установление соединения с БД перед выполнением запроса"""
+    global dbase
+    db = get_db()
+    dbase = FDataBase(db)
+
+
+
 @app.teardown_appcontext 
 def close_db(error): 
     """Закрываем соединение с БД, если оно было установлено"""
@@ -47,16 +59,11 @@ def close_db(error):
 
 @app.route("/")
 def index():
-    db = get_db()
-    dbase = FDataBase(db) 
     return render_template('index.html', menu=dbase.getMenu(), posts=dbase.getPostsAnonce()) 
 
 
 @app.route("/add_post", methods=["POST", "GET"])
 def addpost():
-    db = get_db()
-    dbase = FDataBase(db)
-
     if request.method == "POST":
         if len(request.form['name']) > 4 and len(request.form['post']) > 10:
             res = dbase.addPost(request.form['name'], request.form['post'], request.form['url'])
@@ -72,13 +79,32 @@ def addpost():
 
 @app.route("/post/<alias>")
 def showpost(alias):
-    db = get_db()
-    dbase = FDataBase(db)
     title, post = dbase.getPost(alias) 
     if not title:
         abort(404)
     
     return render_template('post.html', menu=dbase.getMenu(), title=title, post=post)
+
+
+@app.route("/login")
+def login():
+    return render_template("login.html", menu=dbase.getMenu(), title="Authorization")
+
+
+@app.route("/register", methods=["POST", "GET"])
+def register():
+    if request.method == "POST":
+        if len(request.form['name']) > 4 and len(request.form['email']) > 4 and len(request.form['psw']) > 4 and request.form['psw'] == request.form['psw2']:
+            hash = generate_password_hash(request.form['psw'])
+            res = dbase.addUser(request.form['name'], request.form['email'], hash)
+            if res:
+                flash("You are successfully registred", "success")
+                return redirect(url_for('login'))
+            else:
+                flash("Mistake while adding to DB", "error")
+        else:
+            flash("Incorrectly Filled Fields", "error")
+    return render_template('register.html', menu=dbase.getMenu(), title="Registration")
 
 
 if __name__ == "__main__":
