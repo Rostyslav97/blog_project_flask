@@ -1,7 +1,7 @@
 from crypt import methods
 import sqlite3
 import os
-from flask import Flask, flash, render_template, request, g, abort, url_for, redirect
+from flask import Flask, flash, make_response, render_template, request, g, abort, url_for, redirect
 from FDataBase import FDataBase
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, current_user, login_user, login_required, logout_user
@@ -12,6 +12,7 @@ from UserLogin import UserLogin
 DATABASE = '/tmp/flsite.db'
 DEBUG = True
 SECRET_KEY = 'sdg5cf2gh9sdf3se4f34'
+MAX_CONTENT_LENGTH = 1024 * 1024 
 
 
 app = Flask(__name__)
@@ -146,10 +147,39 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    return f"""<p><a href="{url_for('logout')}">Sign out of profile</a>
-                <p>user info: {current_user.get_id()}"""
+    return render_template("profile.html", menu=dbase.getMenu(), title="Profile")
+
+
+@app.route('/userava')
+@login_required
+def userava():
+    img = current_user.getAvatar(app) 
+    if not img:
+        return ""
+    
+    h = make_response(img)
+    h.headers['Content-Type'] = 'image/png'
+    return h
+
+
+@app.route('/upload', methods=["POST", "GET"])
+@login_required
+def upload():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and current_user.verifyExt(file.filename):
+            try:
+                img = file.read()
+                res = dbase.updateUserAvatar(img, current_user.get_id())
+                if not res:
+                    flash("Mistake while updating avatar", "error")
+                flash("Avatar is updated", "success")
+            except FileNotFoundError as e:
+                flash("Mistake while reading the file", "error")
+        else:
+            flash("Mistake while updating avatar", "error")
+    return redirect(url_for('profile'))
 
 
 if __name__ == "__main__":
     app.run(debug=True) 
- 
