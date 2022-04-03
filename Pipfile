@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 flask = "==2.1.0"
+flask-login = "*"
 
 [dev-packages]
 
