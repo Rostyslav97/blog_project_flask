@@ -1,4 +1,3 @@
-from crypt import methods
 import sqlite3
 import os
 from flask import Flask, flash, make_response, render_template, request, g, abort, url_for, redirect
@@ -6,6 +5,7 @@ from FDataBase import FDataBase
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, current_user, login_user, login_required, logout_user
 from UserLogin import UserLogin
+from forms import LoginForm
 
 
 # Конфигурация WSGI приложения
@@ -107,17 +107,31 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('profile')) 
 
-    if request.method == "POST":
-        user = dbase.getUserByEmail(request.form['email'])
-        if user and check_password_hash(user['psw'], request.form['psw']):
+    form = LoginForm()
+    if form.validate_on_submit(): # были ли отправлены данные POST запросом и проверяет корректность введенных данных
+        user = dbase.getUserByEmail(form.email.data)
+        if user and check_password_hash(user['psw'], form.psw.data):
             userlogin = UserLogin().create(user)
-            rm = True if request.form.get('remainme') else False
+            rm = form.remember.data
             login_user(userlogin, remember=rm)
             return redirect(request.args.get("next") or url_for('profile'))
 
         flash("Wrong login/password", "error")
+    
+    return render_template("login.html", menu=dbase.getMenu(), title="Authorization", form=form)
 
-    return render_template("login.html", menu=dbase.getMenu(), title="Authorization")
+
+    # if request.method == "POST":
+    #     user = dbase.getUserByEmail(request.form['email'])
+    #     if user and check_password_hash(user['psw'], request.form['psw']):
+    #         userlogin = UserLogin().create(user)
+    #         rm = True if request.form.get('remainme') else False
+    #         login_user(userlogin, remember=rm)
+    #         return redirect(request.args.get("next") or url_for('profile'))
+
+    #     flash("Wrong login/password", "error")
+
+    # return render_template("login.html", menu=dbase.getMenu(), title="Authorization")
 
 
 @app.route("/register", methods=["POST", "GET"])
