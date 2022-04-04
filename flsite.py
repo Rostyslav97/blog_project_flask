@@ -5,7 +5,7 @@ from FDataBase import FDataBase
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, current_user, login_user, login_required, logout_user
 from UserLogin import UserLogin
-from forms import LoginForm
+from forms import LoginForm, RegisterForm
 
 
 # Конфигурация WSGI приложения
@@ -108,7 +108,7 @@ def login():
         return redirect(url_for('profile')) 
 
     form = LoginForm()
-    if form.validate_on_submit(): # были ли отправлены данные POST запросом и проверяет корректность введенных данных
+    if form.validate_on_submit(): 
         user = dbase.getUserByEmail(form.email.data)
         if user and check_password_hash(user['psw'], form.psw.data):
             userlogin = UserLogin().create(user)
@@ -121,33 +121,18 @@ def login():
     return render_template("login.html", menu=dbase.getMenu(), title="Authorization", form=form)
 
 
-    # if request.method == "POST":
-    #     user = dbase.getUserByEmail(request.form['email'])
-    #     if user and check_password_hash(user['psw'], request.form['psw']):
-    #         userlogin = UserLogin().create(user)
-    #         rm = True if request.form.get('remainme') else False
-    #         login_user(userlogin, remember=rm)
-    #         return redirect(request.args.get("next") or url_for('profile'))
-
-    #     flash("Wrong login/password", "error")
-
-    # return render_template("login.html", menu=dbase.getMenu(), title="Authorization")
-
-
 @app.route("/register", methods=["POST", "GET"])
 def register():
-    if request.method == "POST":
-        if len(request.form['name']) > 4 and len(request.form['email']) > 4 and len(request.form['psw']) > 4 and request.form['psw'] == request.form['psw2']:
-            hash = generate_password_hash(request.form['psw'])
-            res = dbase.addUser(request.form['name'], request.form['email'], hash)
-            if res:
-                flash("You are successfully registred", "success")
-                return redirect(url_for('login'))
-            else:
-                flash("Mistake while adding to DB", "error")
+    form = RegisterForm()
+    if form.validate_on_submit():
+        hash = generate_password_hash(form.psw.data)
+        res = dbase.addUser(form.name.data, form.email.data, hash)
+        if res:
+            flash("You are successfully registred", "success")
+            return redirect(url_for('login'))
         else:
-            flash("Incorrectly Filled Fields", "error")
-    return render_template('register.html', menu=dbase.getMenu(), title="Registration")
+            flash("Mistake while adding to DB", "error")
+    return render_template('register.html', menu=dbase.getMenu(), title="Registration", form=form)
 
 
 @app.route('/logout')

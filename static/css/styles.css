@@ -75,3 +75,22 @@ ul.profile-info {
 }
 
 ul.profile-info li {margin-top: 10px;}
+
+.form-contact label {
+    display: inline-block;
+    min-width: 80px;
+}
+
+.form-contact p {margin: 10px 0 10px 0;}
+
+.form-contact input[type=submit], textarea {
+    font-size: 16px;
+}
+
+.form-contact .invalid {
+    background: #FF9898;
+}
+
+.form-contact .invalid-feedback {
+    color: #CC0000;
+}
